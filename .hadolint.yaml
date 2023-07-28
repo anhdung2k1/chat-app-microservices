@@ -1,0 +1,9 @@
+ignored:
+    - DL3007 #Using latest is prone to errors if the image will ever update. Pin the version explicitly to a release tag.
+    - DL3008 #Pin versions in apt-get install.
+    - DL3015 #Avoid additional packages by specifying --no-install-recommends.
+    - DL3027 #Do not use apt as it is meant to be an end-user tool, use apt-get or apt-cache instead.
+    - DL3020 #Use COPY instead of ADD for files and folders.
+    - DL3009 #Delete the apt-get list after installing something
+    - DL3059 #Multiple consecutive `RUN` instructions. Consider consolidation.
+    - DL3014 #warning: Use the `-y` switch to avoid manual input `apt-get -y install <package>`

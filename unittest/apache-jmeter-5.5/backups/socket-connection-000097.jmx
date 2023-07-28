@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.5">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Test Plan" enabled="true">
+      <stringProp name="TestPlan.comments"></stringProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
+      <boolProp name="TestPlan.tearDown_on_shutdown">true</boolProp>
+      <boolProp name="TestPlan.serialize_threadgroups">false</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
+        <collectionProp name="Arguments.arguments"/>
+      </elementProp>
+      <stringProp name="TestPlan.user_define_classpath"></stringProp>
+    </TestPlan>
+    <hashTree>
+      <TestFragmentController guiclass="TestFragmentControllerGui" testclass="TestFragmentController" testname="Test Fragment: Register" enabled="false"/>
+      <hashTree>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="JSR223 Sampler: Generate variables test" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">for(int i = 1;i&lt;=1000;i++){
+	vars.put(&quot;user_&quot;+i, &quot;user_test_&quot;+i);
+}</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="JSR223 Sampler: Register Account" enabled="true">
+          <stringProp name="scriptLanguage">java</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import java.net.*;
+import java.util.concurrent.TimeUnit;
+import java.io.*;
+import java.util.Random;
+
+public class SocketClient{
+ 	private Socket clientSocket;
+ 	private PrintWriter out;
+ 	private BufferedReader in;
+
+ 	public void startConnection(String ip, int port){
+ 		clientSocket = new Socket(ip,port);
+ 		out = new PrintWriter(clientSocket.getOutputStream(), true);
+ 		in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+ 	}
+ 	public void timer(int time){
+	 	try{
+			TimeUnit.SECONDS.sleep(time);
+		}catch(InterruptedException e){
+			e.printStackTrace();
+		}
+ 	}
+ 	 public void sendMessage(String msg){
+ 		out.write(msg);
+ 		out.flush();
+ 		timer(1);
+ 		return;
+ 	}
+ 	public void stopConnection(){
+ 		in.close();
+ 		out.close();
+ 		clientSocket.close();	
+ 	}
+ 	public void execution(String account, String password){
+ 		sendMessage(&quot;REGISTER_USER|&quot;+account);
+		try{
+			TimeUnit.SECONDS.sleep(1);
+		}catch(InterruptedException e){
+			e.printStackTrace();
+		}
+		sendMessage(&quot;REGISTER_PASSWORD|&quot;+password);	
+ 	}
+}
+String host = &quot;192.168.122.239&quot;;
+int port = 31226;
+
+try{
+	SocketClient client = new SocketClient();
+	client.startConnection(host,port);
+	Random rand = new Random();
+	int upperbound = 1000;
+	int random_num = rand.nextInt(upperbound);
+	String user_name_rand = vars.get(&quot;user_&quot;+String.valueOf(random_num));
+	vars.put(&quot;user_name_register&quot;,user_name_rand);
+	client.execution(&quot;JmeterTestAccount_&quot;+user_name_rand, &quot;JmeterTestAccount_&quot;+user_name_rand);
+	
+}catch(IOException e){
+	log.error(&quot;Error connection to socket&quot;);
+}</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+      </hashTree>
+      <TestFragmentController guiclass="TestFragmentControllerGui" testclass="TestFragmentController" testname="Test Fragment: Chatting" enabled="false"/>
+      <hashTree>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="JSR223 Sampler: Generate variables test" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">for(int i = 1;i&lt;=1000;i++){
+	vars.put(&quot;user_&quot;+i, &quot;user_test_&quot;+i);
+}</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="JSR223 Sampler: Chatting" enabled="true">
+          <stringProp name="scriptLanguage">java</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import java.net.*;
+import java.util.concurrent.TimeUnit;
+import java.io.*;
+import java.util.Random;
+public class SocketClient{
+ 	private Socket clientSocket;
+ 	private PrintWriter out;
+ 	private BufferedReader in;
+
+ 	public void startConnection(String ip, int port){
+ 		clientSocket = new Socket(ip,port);
+ 		out = new PrintWriter(clientSocket.getOutputStream(), true);
+ 		in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+ 	}
+ 	public void stopConnection(){
+ 		in.close();
+ 		out.close();
+ 		clientSocket.close();	
+ 	}
+ 	public void timer(int time){
+	 	try{
+			TimeUnit.SECONDS.sleep(time);
+		}catch(InterruptedException e){
+			e.printStackTrace();
+		}
+ 	}
+ 	 public void sendMessage(String msg){
+ 		out.write(msg);
+ 		out.flush();
+ 		timer(1);
+ 		return;
+ 	}
+}
+String host = &quot;192.168.122.239&quot;;
+int port = 31226;
+
+try{
+	SocketClient client = new SocketClient();
+	client.startConnection(host,port);
+	//Login Account
+	client.sendMessage(&quot;LOGIN_USER|JmeterTestAccount_user_test_711&quot;);
+	client.sendMessage(&quot;LOGIN_PASSWORD|JmeterTestAccount_user_test_711&quot;);
+	//Create a room
+	Random rand = new Random();
+	int upperbound = 10;
+	int random_num = rand.nextInt(upperbound);
+	String user_name_rand = vars.get(&quot;user_&quot;+String.valueOf(random_num));
+	client.sendMessage(&quot;CREATE_ROOM|jmeter_room_&quot;+user_name_rand);
+	//Join room
+	client.sendMessage(&quot;JOIN_ROOM|101&quot;); // JOIN ROOM WITH SPECIFY ID
+	//SENT MESSAGE
+	client.sendMessage(&quot;USER_CHATTING|This is a message test from Jmeter user test&quot;);
+	//OUT CHAT
+	client.sendMessage(&quot;END_READING|&quot;);
+	client.stopConnection();
+}catch(IOException e){
+	log.error(&quot;Error connection to socket&quot;);
+}</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+      </hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group: Chatting" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">1</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">20</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">1</stringProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+        <stringProp name="ThreadGroup.duration"></stringProp>
+        <stringProp name="ThreadGroup.delay"></stringProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+      </ThreadGroup>
+      <hashTree>
+        <ModuleController guiclass="ModuleControllerGui" testclass="ModuleController" testname="Module Controller: Chatting" enabled="true">
+          <collectionProp name="ModuleController.node_path">
+            <stringProp name="764597751">Test Plan</stringProp>
+            <stringProp name="764597751">Test Plan</stringProp>
+            <stringProp name="1330898986">Test Fragment: Chatting</stringProp>
+          </collectionProp>
+        </ModuleController>
+        <hashTree/>
+      </hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Thread Group: Update Account User" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">1</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">20</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">1</stringProp>
+        <boolProp name="ThreadGroup.scheduler">false</boolProp>
+        <stringProp name="ThreadGroup.duration"></stringProp>
+        <stringProp name="ThreadGroup.delay"></stringProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+      </ThreadGroup>
+      <hashTree>
+        <ModuleController guiclass="ModuleControllerGui" testclass="ModuleController" testname="Module Controller: Register" enabled="true">
+          <collectionProp name="ModuleController.node_path">
+            <stringProp name="764597751">Test Plan</stringProp>
+            <stringProp name="764597751">Test Plan</stringProp>
+            <stringProp name="-797664121">Test Fragment: Register</stringProp>
+          </collectionProp>
+        </ModuleController>
+        <hashTree/>
+        <JSR223Sampler guiclass="TestBeanGUI" testclass="JSR223Sampler" testname="JSR223 Sampler: Update User" enabled="true">
+          <stringProp name="scriptLanguage">groovy</stringProp>
+          <stringProp name="parameters"></stringProp>
+          <stringProp name="filename"></stringProp>
+          <stringProp name="cacheKey">true</stringProp>
+          <stringProp name="script">import java.net.*;
+import java.util.concurrent.TimeUnit;
+import java.io.*;
+
+public class SocketClient{
+ 	private Socket clientSocket;
+ 	private PrintWriter out;
+ 	private BufferedReader in;
+
+ 	public void startConnection(String ip, int port){
+ 		clientSocket = new Socket(ip,port);
+ 		out = new PrintWriter(clientSocket.getOutputStream(), true);
+ 		in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+ 	}
+ 	public void timer(int time){
+	 	try{
+			TimeUnit.SECONDS.sleep(time);
+		}catch(InterruptedException e){
+			e.printStackTrace();
+		}
+ 	}
+ 	 public void sendMessage(String msg){
+ 		out.write(msg);
+ 		out.flush();
+ 		timer(1);
+ 		return;
+ 	}
+ 	public void stopConnection(){
+ 		in.close();
+ 		out.close();
+ 		clientSocket.close();	
+ 	}
+}
+String host = &quot;192.168.122.239&quot;;
+int port = 31226;
+try{
+	SocketClient client = new SocketClient();
+	client.startConnection(host,port);
+	//Login Account
+	String user_name_register = vars.get(&quot;user_name_register&quot;);
+	client.sendMessage(&quot;LOGIN_USER|JmeterTestAccount_&quot;+user_name_register);
+	client.sendMessage(&quot;LOGIN_PASSWORD|JmeterTestAccount_&quot;+user_name_register);
+	//Update Profile
+	client.sendMessage(&quot;UPDATE_PROFILE|&quot;);
+	client.sendMessage(&quot;UPDATE_ADDRESS|JmeterAddress_&quot;+user_name_register);
+	client.sendMessage(&quot;UPDATE_GENDER|JmeterGender_&quot;+user_name_register);
+	
+}catch(IOException e){
+	log.error(&quot;Error connection to socket&quot;);
+}</stringProp>
+        </JSR223Sampler>
+        <hashTree/>
+      </hashTree>
+      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+      <ResultCollector guiclass="StatVisualizer" testclass="ResultCollector" testname="Aggregate Report" enabled="true">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>

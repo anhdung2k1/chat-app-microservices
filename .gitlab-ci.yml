@@ -1,0 +1,126 @@
+image: "docker.io/ubuntu"
+stages:
+  - check_coding_styles
+  - lint_dockerfile
+  - docker_integrate
+  - unittest
+  - automation_testing
+  - deploy
+check-coding-style:
+  stage: check_coding_styles
+  script:
+    - unittest/checkStyle.sh
+  tags:
+    - dung
+lint-dockerfile-job:
+    stage: lint_dockerfile
+    services: 
+      - name: docker:dind
+        alias: thedockerhost
+    variables:
+      DOCKER_HOST: tcp://thedockerhost:2375/
+      DOCKER_DRIVER: overlay2
+      DOCKER_TLS_CERTDIR: ""
+    image: docker:dind
+    script:
+        - docker run --rm -i -w $PWD -v $PWD:$PWD hadolint/hadolint hadolint $PWD/authentication/authentication/Dockerfile
+        - docker run --rm -i -w $PWD -v $PWD:$PWD hadolint/hadolint hadolint $PWD/socket-server/Dockerfile
+        - docker run --rm -i -w $PWD -v $PWD:$PWD hadolint/hadolint hadolint $PWD/socket-client/Dockerfile
+    tags:
+        - dung-docker
+    
+docker-integrate-job:
+    stage: docker_integrate
+    services: 
+      - name: docker:dind
+        alias: thedockerhost
+    variables:
+      DOCKER_HOST: tcp://thedockerhost:2375/
+      DOCKER_DRIVER: overlay2
+      DOCKER_TLS_CERTDIR: ""
+    image: docker:dind
+    script:
+        - docker build -t authentication authentication/authentication/.
+        - docker build -t socket-server socket-server/.
+        - docker build -t socket-client socket-client/. 
+    tags:
+        - dung-docker
+
+test-job1:
+  stage: unittest
+  services:
+    - name: docker:dind
+  image: docker:dind
+  script:
+    - echo "Functional Testing"
+    - export root=$(git rev-parse --show-toplevel)
+    - echo $root
+    - docker ps -a
+    - docker container start mysql_container
+    - export mysqlIp=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mysql_container)
+    - echo $mysqlIp
+    - docker-compose up -d authentication
+    - export authenIp=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' authentication)
+    - echo $authenIp
+    - cd unittest
+    - g++ -o Gtest Gtest.cpp ../socket-server/src/services/ChatServerService.cpp ../socket-server/src/controller/ChatServerController.cpp ../socket-server/src/model/Chat.cpp ../socket-server/src/model/Message.cpp ../socket-server/src/model/User.cpp ../socket-server/src/repository/ChatRepository.cpp ../socket-server/src/utils/CurlUtils.cpp ../socket-client/src/view/ChatView.cpp ../socket-client/src/view/StatusBar.cpp ../socket-client/src/model/ChatClient.cpp ../socket-client/src/services/ChatService.cpp ../socket-client/src/controller/ChatController.cpp ../socket-client/src/model/UserClient.cpp ../socket-client/src/model/MessageClient.cpp -lgtest -lmysqlclient -lcurl -lpthread -lncurses
+    - ./Gtest
+  tags:
+    - dung
+test-automation: #Jmeter Automation Testing
+  stage: automation_testing
+  script:
+    - echo $PWD
+    - cd unittest/apache-jmeter-5.5/bin
+    - find *.jmx
+    - ./jmeter -n -t socket-connection.jmx
+  tags:
+    - dung
+deploy-process: #K8s Deployment
+  stage: deploy
+  image: aliartiza75/kubectl:0.0.2
+  script:
+    - echo $PWD
+    - export KUBECONFIG=$PWD/k8s-configuration/config #Export file authentication config to lab intern
+    - kubectl get ns 
+    - cd k8s-configuration
+    - pushd . #Push a directory into stack
+    - cd mysql-k8s-configuration #Applying mysql-configuration
+    - for f in $(ls); do kubectl -n cba apply -f $f; done
+    - popd #Navigate to k8s-configuration folder
+    - cd application-k8s-configuration
+    - for f in $(ls); do kubectl -n cba apply -f $f; done
+    - kubectl -n cba get po
+    - kubectl -n cba get svc
+    - kubectl -n cba get pv
+    - kubectl -n cba get node -o wide
+  tags:
+    - brainstorm_ext_node2
+deploy:deploy-docker:
+  extends: deploy-process
+  services:
+      - name: docker:dind
+  image: docker:dind
+  script:
+    - docker login $CI_REGISTRY_ADDRESS -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+    - cd socket-server 
+    - docker build -t socket-server . && docker tag socket-server $CI_REGISTRY_ADDRESS/socket-server:latest && docker push $CI_REGISTRY_ADDRESS/socket-server:latest
+    - cd ../
+    - cd authentication/authentication 
+    - docker build -t authentication . && docker tag authentication $CI_REGISTRY_ADDRESS/authentication:latest && docker push $CI_REGISTRY_ADDRESS/authentication:latest
+    - docker images | grep $CI_REGISTRY_ADDRESS
+  tags:
+    - brainstorm_ext_node2
+deploy:deploy-k8s:
+  extends: deploy-process
+  services:
+    - name: docker:dind
+  image: docker:dind
+  script:
+    - export KUBECONFIG=$PWD/k8s-configuration/config #Export file authentication config to lab intern
+    - docker login $CI_REGISTRY_ADDRESS -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD
+    - kubectl -n cba rollout restart deployment
+    - if [[ $(docker images -q | grep $CI_REGISTRY_ADDRESS | grep "<none>" | awk '{print $3}' | wc -l) > 0 ]]; then docker rmi $(docker images | grep $CI_REGISTRY_ADDRESS | grep "<none>" | awk '{print $3}'); fi
+    - kubectl -n cba get all -o wide
+  tags:
+    - brainstorm_ext_node2

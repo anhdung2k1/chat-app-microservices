@@ -2,7 +2,7 @@
 #include <chrono>
 #include <iomanip>
 #include "locale.h"
-#include "ncursesw/ncurses.h"
+#include "ncurses.h"
 
 using std::thread;
 using std::vector;
@@ -423,7 +423,7 @@ void ChatView::handleLogin(int sock, int selection) {
          mvwprintw(registerWin, 9, 5, "(Username just contains A-Z, a-z, 0-9, '_', can't start");
          mvwprintw(registerWin, 10, 5, "with a number, and must have more than 3 characters)");
          mvwprintw(registerWin, 14, 5, "(Password must atleast 8 characters and include alphabet,");
-         mvwprintw(registerWin, 15, 5, "special char !\"#$%&'()*+,-./:;<=>?@[\\ ]^_`{|}~ and number,");
+         mvwprintw(registerWin, 15, 5, "special char !\"#$%%'()*+,-./:;<=>?@[\\ ]^_`{|}~ and number,");
          mvwprintw(registerWin, 16, 5, "ex: 4vQj*SFp)");
          wattroff(registerWin, COLOR_PAIR(1));
          mvwprintw(registerWin, registerWin->_begy + 3, (registerWin->_maxx - 19) / 2, "(Press Esc to back)");
@@ -679,7 +679,7 @@ void ChatView::handleLogin(int sock, int selection) {
                      {
                         c = '*';
                      }
-                     mvwprintw(passWin, curs_y, curs_x, ch);
+                     mvwprintw(passWin, curs_y, curs_x,"%s", ch);
                      wrefresh(passWin);
                      input.push_back(char(n));
                      curs_x++;
@@ -700,7 +700,7 @@ void ChatView::handleLogin(int sock, int selection) {
                      curs_set(0);
                      attron(COLOR_PAIR(1));
                      mvprintw(registerWin->_begy + 20, 5, "Password must atleast 8 characters and include alphabet, ");
-                     mvprintw(registerWin->_begy + 21, 5, "special char !\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ and number,");
+                     mvprintw(registerWin->_begy + 21, 5, "special char !\"#$%%'()*+,-./:;<=>?@[\\]^_`{|}~ and number,");
                      mvprintw(registerWin->_begy + 22, 5, "ex: 4vQj*SFp. Press ENTER to continue.");
                      attroff(COLOR_PAIR(1));
                      refresh();
@@ -1181,7 +1181,7 @@ void ChatView::Menu() {
 
 void ChatView::ChatRoomConsole(ChatClient room, WINDOW* win) {
    string output = "Room name: " + room.getRoomName();
-   mvwprintw(win, 2, (win->_maxx / 2) - (output.length()/2), output.c_str());
+   mvwprintw(win, 2, (win->_maxx / 2) - (output.length()/2),"%s", output.c_str());
 }
 
 void ChatView::UserConsole(int sock) {
@@ -1979,7 +1979,7 @@ void ChatView::ChatConsole(ChatClient joinedRoom, int sock) {
             }
             else  {
                c = char(n);
-               mvwprintw(GetListUserWin, curs_y, curs_x, ch);
+               mvwprintw(GetListUserWin, curs_y, curs_x,"%s", ch);
                wrefresh(GetListUserWin);
                input.push_back(c);
                curs_x++;
@@ -1988,7 +1988,7 @@ void ChatView::ChatConsole(ChatClient joinedRoom, int sock) {
       }
       else  {
          c = char(n);
-         mvwprintw(ChatConsoleWin, curs_y, curs_x, ch);
+         mvwprintw(ChatConsoleWin, curs_y, curs_x,"%s", ch);
          wrefresh(ChatConsoleWin);
          input.push_back(c);
          curs_x++;
@@ -2423,7 +2423,7 @@ void ChatView::UserUI(int sock, UserClient user,WINDOW *interactUserMenuWin) {
          c = char(n);
          //printw("X: %d, Y: %d", curs_x, curs_y);
          //refresh();
-         mvwprintw(OrtherUserProfileWin, 34, 12, ch);// print the current key on screen and push it to input string
+         mvwprintw(OrtherUserProfileWin, 34, 12,"%s", ch);// print the current key on screen and push it to input string
          wrefresh(OrtherUserProfileWin);
          input.push_back(c);
          //curs_x++;

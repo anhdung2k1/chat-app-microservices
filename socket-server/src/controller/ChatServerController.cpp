@@ -16,10 +16,10 @@ void ChatServerController::connectToClient() {
     int serverFd, addrlen;
     struct sockaddr_in address;
     int maxClient = 10;
-    string apiIp = "http://10.104.197.253:8080/api"; // // k8s
-    // string apiIp = "http://172.25.0.2:8080/api"; //local
-    string mysqlIp = "10.110.47.64"; // //k8s
-    // string mysqlIp = "172.25.0.3"; // local
+    // string apiIp = "http://10.104.197.253:8080/api"; // // k8s
+    string apiIp = "http://172.18.0.2:8080/api"; //local
+    // string mysqlIp = "10.110.47.64"; // //k8s
+    string mysqlIp = "172.18.0.3"; // local
     map<int, ChatServerService::Client> clientMap;
     bool establishConnection = ChatServerService::handleConnect(serverFd, maxClient, addrlen, address, false, PORT);
     if (establishConnection) {

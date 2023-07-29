@@ -2,10 +2,10 @@
 #include "ChatService.h"
 #include <iomanip>
 #include <cstdlib>
-#define PORT 31226
-#define ADDRESS "192.168.122.239"
-// #define PORT 8000
-// #define ADDRESS "172.25.0.4"
+// #define PORT 31226
+// #define ADDRESS "192.168.122.239"
+#define PORT 8000
+#define ADDRESS "172.18.0.4"
 
 using std::string;
 using std::stringstream;
@@ -93,7 +93,7 @@ void ChatService::MessageSend(int sock, WINDOW *win, int count) {
     string prompt = "Enter message: ";
     init_pair(3, COLOR_CYAN, COLOR_BLACK);
     wattron(win, COLOR_PAIR(3));
-    mvwprintw(win, win->_maxy - 1, 3, prompt.c_str());
+    mvwprintw(win, win->_maxy - 1, 3, "%s", prompt.c_str());
     wattroff(win, COLOR_PAIR(3));
     overflowLength = 0;
     curs_set(1);
@@ -126,7 +126,7 @@ void ChatService::MessageSend(int sock, WINDOW *win, int count) {
                     if (curs_x == prompt.length() + 3 && overflowLength > 0) {
                         bzero(str, win->_maxx);
                         mvwinstr(win, win->_maxy - 2, prompt.length() + 3, str);
-                        mvwprintw(win, win->_maxy - 1, prompt.length() + 3, str);
+                        mvwprintw(win, win->_maxy - 1, prompt.length() + 3,"%s", str);
                         wmove(win, win->_maxy - 2, prompt.length() + 3);
                         wclrtoeol(win);
                         ChatView::scrollScreenDown(posMsg, win, win->_maxy - 1 - overflowLength, tempMsg);
@@ -221,7 +221,7 @@ void ChatService::MessageSend(int sock, WINDOW *win, int count) {
                             mvwinstr(win, j+1, prompt.length() + 3, str);
                             wmove(win, j, 3);
                             wclrtoeol(win);
-                            mvwprintw(win, j, prompt.length() + 3, str);
+                            mvwprintw(win, j, prompt.length() + 3,"%s", str);
                         }
                         curs_x = prompt.length() + 3;
                         curs_y = win->_maxy - 1;
@@ -232,7 +232,7 @@ void ChatService::MessageSend(int sock, WINDOW *win, int count) {
                 if (overflowLength != 2) {
                     c = char(n);
                     input.push_back(c);
-                    mvwprintw(win, curs_y, curs_x++, ch);// print the current key on screen and push it to input string
+                    mvwprintw(win, curs_y, curs_x++,"%s", ch);// print the current key on screen and push it to input string
                     wmove(win, curs_y, curs_x);
                     wclrtoeol(win);
                     wrefresh(win);

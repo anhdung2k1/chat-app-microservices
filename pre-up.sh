@@ -21,10 +21,12 @@ myLocal() {
     echo "Authentication IP: $authenIp"
     #Check the Server Container is running or not
     serverContainer=$(docker ps -a --format "{{.Names}}" | grep server -m 1)
-    if [[ -n $(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' authentication) ]]; then
+    echo "serverContainer: $serverContainer"
+    if [[ -n $(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $serverContainer) ]]; then
         export serverIp=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $serverContainer)
     else 
-        docker compose up authentication -d
+        docker compose up server -d
+	serverContainer=$(docker ps -a --format "{{.Names}}" | grep server -m 1)
         export serverIp=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $serverContainer)
     fi
     echo "Server IP: $serverIp"

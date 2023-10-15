@@ -1,0 +1,74 @@
+#! /bin/bash
+
+die () {
+    echo "ERROR: $*" >&2
+    exit 1
+}
+
+#fire
+#start a devcon container:
+# mount the dir to /devel/<repo>
+
+cmd_fire() {
+    test -n "$__user" || __user=$USER
+    test -n "$__uid" || __uid=$(id -u $__user)
+    test -n "$__gid" || __gid=$(id -g $__user)
+    test -n "$__repo" || __repo=$(basename $(pwd))
+    test -n "$__mem" || __mem="3"
+    PARAMS="--privileged"
+    PARAMS="$PARAMS -e TZ=VietNam/Ho_Chi_Minh"
+    PARAMS="$PARAMS -v $(dirname $(pwd)):/devel"
+    test -n "$__name" && PARAMS="$PARAMS --name $__name"
+    test -n "$http_proxy" && PARAMS="$PARAMS -e http_proxy=$http_proxy"
+    test -n "$https_proxy" && PARAMS="$PARAMS -e https_proxy=$https_proxy"
+    test -n "$no_proxy" && PARAMS="$PARAMS -e no_proxy=$no_proxy"
+    test -n "$__repo" && PARAMS="$PARAMS -e repo=$__repo"
+    cont=$(docker create $PARAMS adevcon)
+    docker start $cont
+    #set the size of the ramdisk
+    mem="$__mem"H
+    docker exec $cont /bin/bash -c "echo \"tmpfs /var/lib/docker tmpfs nodev,nosuid,size=$mem 0 0\" > /etc/fstab"
+    work_dir="$(basename $(dirname $(pwd)))"
+    docker exec $cont /bin/bash -c "echo $work_dir > /etc/debian_chroot"
+    #Create identical user
+    docker exec $cont /bin/bash -c "createuser $__user $__uid $__gid"
+    #Copy the .ssh config and public key
+    git_user_name="$(git config --global --get user.name)"
+    git_user_email="$(git config --global --get user.email)"
+    docker exec $cont /bin/bash -c "su $__user -c \"git config --global --add user.name \"$git_user_name\"\""
+    docker exec $cont /bin/bash -c "su $__user -c \"git config --global --add user.email \"$git_user_email\"\""
+    test -r ~/.ssh/config && docker cp ~/.ssh/config $cont:/home/$__user/.ssh/
+    test -r ~/.ssh/id_rsa.pub && docker cp ~/.ssh/id_rsa.pub $cont:/home/$__user/.ssh/authorized_keys
+    test -r ~/.ssh/id_rsa.pub && docker cp ~/.ssh/id_rsa.pub $cont:/home/$__user/.ssh/id_rsa.pub
+    test -r ~/.ssh/id_rsa.pub && docker cp ~/.ssh/id_rsa $cont:/home/$__user/.ssh/id_rsa
+    docker exec $cont /bin/bash -c "mkdir /home/$__user/.docker"
+    test -r ~/.docker/config.json && docker cp ~/.docker/config.json $cont:/home/$__user/.docker/config.json
+    docker exec $cont /bin/bash -c "\
+        chown -R $__user:$__gid /home/$__user/.ssh ;\
+        chmod 700 /home/$__user/.ssh ;\
+        chmod 600 /home/$__user/.ssh/authorized_keys ;\
+        chown -R $__user:$__gid /home/$__user/.docker"
+    netaddr=$(docker inspect --format '{ .NetworkSettings.IPAddress }' $cont)
+    echo "New devcon created: $(echo $cont | head -c 7) $netaddr"
+}
+#Get command
+cmd=fire
+
+while echo "$1" | grep -q '^--'; do
+    if echo $1 | grep -q =; then
+        o=$(echo "$1" | cut -d= -f1 | sed -e 's,-,_,g')
+        v=$(echo "$1" | cut -d= -f2-)
+        eval "$o=\"$v\""
+    else
+        o=$(echo "$1" | sed -e 's,-,_,g')
+        eval "$o=yes"
+    fi
+    shift
+done
+unset o
+long_opts=`set | grep '^__' | cut -d= -f1`
+
+trap "die Interrupted" INT TERM
+cmd_$cmd "$@"
+status=$?
+exit $status

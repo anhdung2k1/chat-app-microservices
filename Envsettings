@@ -1,0 +1,36 @@
+#! /bin/sh
+
+if ! test -d .git; then
+    echo "This file needs to be sourced from the root directory of the repo." >&2
+    return
+fi
+
+export AUTO_CLEAN_MODE=true
+export VAS_GIT=$(pwd -P)
+
+test -n "$BUILD_DIR" || export BUILD_DIR="$VAS_GIT/build"
+test -n "$GOPATH" || export GOPATH="$BUILD_DIR/go"
+test -n "$GOCACHE" || export GOCACHE="$GOPATH/cache"
+test -n "$CGO_ENABLED" || export CGO_ENABLED=0
+export PATH="$BUILD_DIR/bin:$PATH"
+test -z "$KUBECONFIG" && test -f ~/.kube/config && export KUBECONFIG=$(readlink -f ~/.kube/config)
+test -n "$KUBECONFIG" || export KUBECONFIG="$VAS_GIT/k8s-configuration/config.conf"
+test -n "$K8S_CONF" || export K8S_CONF=/devel/k8s.conf
+if [ -r "$K8S_CONF" ]; then
+    export KUBECONFIG=$K8S_CONF
+fi
+
+function vas() { "$VAS_GIT"/vas.sh "$@"; }
+alias cdrepo='cd $VAS_GIT'
+
+function de() {
+    if [ -n "$1" ]; then
+        docker exec -it "$1" /bin/bash -l;
+    else
+        docker exec -it "(docker ps -q | head -1)" /bin/bash -l;
+    fi;
+}
+
+source $VAS_GIT/auto_complete.sh
+which kubectl > /dev/null && source <(kubectl completion bash)
+which helm > /dev/null && source <(helm completion bash)

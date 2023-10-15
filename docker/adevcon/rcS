@@ -1,0 +1,14 @@
+#!/bin/bash
+# add the proxy envs to login profile
+echo "# Extras for devcon" > /etc/profile.d/extras.sh
+echo "export LC_ALL=C" >> /etc/profile.d/extras.sh
+echo 'export PATH=/usr/local/go/bin:$PATH' >> /etc/profile.d/extras.sh
+test -n "$http_proxy" && echo "export http_proxy=$http_proxy" >> /etc/profile.d/extras.sh
+test -n "$https_proxy" && echo "export https_proxy=$https_proxy" >> /etc/profile.d/extras.sh
+test -n "$no_proxy" && echo "export no_proxy=$no_proxy" >> /etc/profile.d/extras.sh
+test -n "$repo" && echo "cd /devel/$repo; source Envsettings" >> /etc/profile.d/extras.sh
+
+mkdir -p /var/lib/docker
+mount /var/lib/docker
+
+exit 0
